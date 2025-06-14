@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
-  title: "Linear Issue Importer",
+  title: "LinearSync",
   description:
     "Import your tasks to Linear in seconds with AI-powered organization",
 };
