@@ -218,6 +218,18 @@ export default function Home() {
     });
   }
 
+  function editIssue(index: number, title: string, description: string) {
+    setIssues((prev) => {
+      if (!prev) return prev;
+      const updatedIssues = [...prev.issues];
+      updatedIssues[index] = { title, description };
+      return {
+        ...prev,
+        issues: updatedIssues,
+      };
+    });
+  }
+
   return (
     <main className="flex flex-col items-center h-screen max-w-screen-md mx-auto py-10 px-4">
       {/* Progress indicator */}
@@ -321,6 +333,7 @@ export default function Home() {
                 title={title}
                 description={description}
                 onDelete={() => removeIssue(idx)}
+                onEdit={(newTitle, newDescription) => editIssue(idx, newTitle, newDescription)}
               />
             ))}
           </div>
