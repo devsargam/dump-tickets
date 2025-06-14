@@ -1,11 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { clearURLParams } from "@/utils";
 import { exchangeLinearToken, getLinearAuthURL } from "@/utils/linear";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 
 export default function Home() {
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
   const openLinearAuth = () => {
     // Generate random code to validate against CSRF attack
     const verificationCode = `linear-${uuid()}`;
@@ -30,15 +36,49 @@ export default function Home() {
       const refreshToken = authResponse.get("code");
 
       const { access_token } = await exchangeLinearToken(refreshToken!);
-      console.log(access_token);
+      if (!access_token) return toast.error("Failed to exchange token");
+
+      setAccessToken(access_token);
+      clearURLParams();
     })();
   }, []);
 
+  useEffect(() => {
+    if (accessToken) {
+      console.log(accessToken);
+    }
+  }, [accessToken]);
+
   return (
-    <main>
-      <Button variant="outline" onClick={openLinearAuth}>
+    <main className="flex flex-col gap-4 items-center h-screen max-w-screen-md mx-auto py-10">
+      <Button
+        variant="outline"
+        onClick={openLinearAuth}
+        disabled={!!accessToken}
+      >
         Open Linear Auth
       </Button>
+      {accessToken && (
+        <>
+          <Textarea
+            ref={textAreaRef}
+            className="w-full h-full resize-none focus-visible:ring-0"
+            rows={20}
+            autoFocus
+          />
+          <Button
+            variant="outline"
+            onClick={() => {
+              const text = textAreaRef.current?.value;
+              if (!text) return toast.error("No text to process");
+
+              console.log(text);
+            }}
+          >
+            AI Actions
+          </Button>
+        </>
+      )}
     </main>
   );
 }
