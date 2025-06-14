@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { clearURLParams } from "@/utils";
 import { exchangeLinearToken, getLinearAuthURL } from "@/utils/linear";
+import { issuesSchema } from "@/utils/zod";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
@@ -68,11 +69,19 @@ export default function Home() {
           />
           <Button
             variant="outline"
-            onClick={() => {
+            onClick={async () => {
               const text = textAreaRef.current?.value;
               if (!text) return toast.error("No text to process");
 
-              console.log(text);
+              const response = await fetch("/api/chat", {
+                method: "POST",
+                body: JSON.stringify({ text }),
+              });
+
+              const data = issuesSchema.safeParse(await response.json());
+              if (!data.success) return toast.error("Failed to parse response");
+
+              console.log(data.data);
             }}
           >
             AI Actions
