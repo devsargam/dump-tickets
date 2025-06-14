@@ -8,3 +8,5 @@ export const issuesSchema = z.object({
     })
   ),
 });
+
+export type Issue = z.infer<typeof issuesSchema>;

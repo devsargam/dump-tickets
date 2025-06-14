@@ -2,15 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { IssueCard } from "@/components/linear-issue-card";
 import { clearURLParams } from "@/utils";
 import { exchangeLinearToken, getLinearAuthURL } from "@/utils/linear";
-import { issuesSchema } from "@/utils/zod";
+import { type Issue, issuesSchema } from "@/utils/zod";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 
 export default function Home() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [issues, setIssues] = useState<Issue | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const openLinearAuth = () => {
@@ -81,11 +83,34 @@ export default function Home() {
               const data = issuesSchema.safeParse(await response.json());
               if (!data.success) return toast.error("Failed to parse response");
 
-              console.log(data.data);
+              setIssues(data.data);
             }}
           >
             AI Actions
           </Button>
+
+          {/* Render issues as cards when available */}
+          {issues?.issues?.length ? (
+            <section className="w-full flex flex-col gap-4 mt-8">
+              <header className="flex items-center gap-2 text-sm font-semibold">
+                <h2>Todo</h2>
+                <span className="text-muted-foreground">
+                  {issues.issues.length}
+                </span>
+              </header>
+
+              <div className="flex flex-col gap-3">
+                {issues.issues.map(({ title, description }, idx) => (
+                  <IssueCard
+                    key={idx}
+                    index={idx + 1}
+                    title={title}
+                    description={description}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </>
       )}
     </main>
