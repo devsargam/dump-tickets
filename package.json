@@ -11,6 +11,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",
     "@ai-sdk/react": "^1.2.12",
+    "@apollo/client": "^3.13.8",
     "@linear/sdk": "^44.1.0",
     "@radix-ui/react-slot": "^1.2.3",
     "ai": "^4.3.16",

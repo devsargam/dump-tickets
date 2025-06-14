@@ -9,11 +9,127 @@ import { type Issue, issuesSchema } from "@/utils/zod";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
+import { LINEAR } from "@/utils/constants";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function Home() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [issues, setIssues] = useState<Issue | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  const createIssue = async (issues: Issue) => {
+    if (!accessToken) {
+      toast.error(
+        "Missing access token. Please authenticate with Linear first."
+      );
+      return;
+    }
+
+    try {
+      // Step 1: Fetch the first available team for the authenticated user.
+      const viewerQuery = `
+        query ViewerTeams {
+          viewer {
+            teams(first: 1) {
+              nodes {
+                id
+                name
+              }
+            }
+          }
+        }
+      `;
+
+      const viewerRes = await fetch(LINEAR.GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ query: viewerQuery }),
+      });
+
+      const viewerData = await viewerRes.json();
+      const teamId = viewerData?.data?.viewer?.teams?.nodes?.[0]?.id as
+        | string
+        | undefined;
+
+      if (!teamId) {
+        toast.error("Unable to resolve a Linear team for this account.");
+        return;
+      }
+
+      // Helper GraphQL mutation string (re-used for each issue)
+      const issueCreateMutation = `
+        mutation CreateIssue($input: IssueCreateInput!) {
+          issueCreate(input: $input) {
+            success
+            issue {
+              id
+              identifier
+              title
+            }
+          }
+        }
+      `;
+
+      const totalIssues = issues.issues.length;
+      let completedIssues = 0;
+
+      for (const { title, description } of issues.issues) {
+        // Create a promise that performs the mutation
+        const mutationPromise = (async () => {
+          const variables = {
+            input: {
+              teamId,
+              title,
+              description,
+            },
+          };
+
+          const createRes = await fetch(LINEAR.GRAPHQL_ENDPOINT, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ query: issueCreateMutation, variables }),
+          });
+
+          const createData = await createRes.json();
+
+          if (!createData?.data?.issueCreate?.success) {
+            throw new Error(`Failed to create issue: ${title}`);
+          }
+
+          return createData.data.issueCreate.issue;
+        })();
+
+        // Fire and forget the toast; it doesn't return the mutation promise
+        toast.promise(mutationPromise, {
+          // loading: `Creating "${title}" (${
+          //   completedIssues + 1
+          // }/${totalIssues})...`,
+          loading: "Creating issue...",
+          success: (issue: { identifier: string }) => {
+            completedIssues += 1;
+            return `Created ${issue.identifier}: ${title}`;
+          },
+          error: (err: Error) => err.message,
+        });
+
+        // Wait for the mutation itself before continuing
+        await mutationPromise;
+      }
+
+      toast.success(
+        `All ${totalIssues} issues have been imported to Linear 🚀`
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("An unexpected error occurred while creating issues.");
+    }
+  };
 
   const openLinearAuth = () => {
     // Generate random code to validate against CSRF attack
@@ -112,8 +228,10 @@ export default function Home() {
                 </div>
                 <Button
                   variant="default"
-                  onClick={() => {
+                  onClick={async () => {
                     console.log("hello world");
+
+                    createIssue(issues);
                   }}
                 >
                   Import to Linear
