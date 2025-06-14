@@ -283,7 +283,7 @@ export default function Home() {
                   <h1 className="text-4xl font-light text-zinc-900 tracking-tight">
                     Import issues to Linear
                   </h1>
-                  <p className="text-lg text-zinc-600 font-normal max-w-md mx-auto leading-relaxed">
+                  <p className="text-lg text-zinc-600 font-normal max-w-md mx-auto leading-relaxed text-balance">
                     Connect your account, paste your tasks, and let AI organize
                     them into structured Linear issues.
                   </p>
@@ -299,9 +299,9 @@ export default function Home() {
                   Connect Linear Account
                 </Button>
 
-                <p className="text-sm text-zinc-500 max-w-sm mx-auto">
-                  We'll redirect you to Linear for secure authentication. You
-                  can revoke access anytime.
+                <p className="text-sm text-zinc-500 max-w-sm mx-auto text-balance">
+                  We'll redirect you to Linear for secure authentication.
+                  You can revoke access anytime.
                 </p>
               </motion.section>
             )}

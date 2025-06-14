@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={` antialiased`}>
+        <body className="font-sans antialiased">
           {children}
           <Toaster richColors closeButton />
         </body>
