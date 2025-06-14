@@ -52,6 +52,17 @@ export default function Home() {
     }
   }, [accessToken]);
 
+  // Function to remove an issue by index
+  function removeIssue(index: number) {
+    setIssues((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        issues: prev.issues.filter((_, idx) => idx !== index),
+      };
+    });
+  }
+
   return (
     <main className="flex flex-col gap-4 items-center h-screen max-w-screen-md mx-auto py-10">
       <Button
@@ -92,11 +103,21 @@ export default function Home() {
           {/* Render issues as cards when available */}
           {issues?.issues?.length ? (
             <section className="w-full flex flex-col gap-4 mt-8">
-              <header className="flex items-center gap-2 text-sm font-semibold">
-                <h2>Todo</h2>
-                <span className="text-muted-foreground">
-                  {issues.issues.length}
-                </span>
+              <header className="flex items-center justify-between gap-2 text-sm font-semibold">
+                <div className="flex items-center gap-2">
+                  <h2>Todo</h2>
+                  <span className="text-muted-foreground">
+                    {issues.issues.length}
+                  </span>
+                </div>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    console.log("hello world");
+                  }}
+                >
+                  Import to Linear
+                </Button>
               </header>
 
               <div className="flex flex-col gap-3">
@@ -106,6 +127,7 @@ export default function Home() {
                     index={idx + 1}
                     title={title}
                     description={description}
+                    onDelete={() => removeIssue(idx)}
                   />
                 ))}
               </div>
