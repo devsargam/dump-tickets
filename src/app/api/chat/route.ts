@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { z } from "zod";
 import { generateObject, streamText } from "ai";
 import { NextResponse } from "next/server";
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const { text } = await req.json();
 
     const result = await generateObject({
-      model: openai("gpt-4o"),
+      model: google("gemini-2.0-flash-001"),
       messages: [
         {
           role: "user",
