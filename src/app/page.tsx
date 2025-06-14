@@ -291,7 +291,7 @@ export default function Home() {
 
                 <Button
                   size="lg"
-                  className="px-8 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
+                  className="px-8 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors cursor-pointer"
                   onClick={openLinearAuth}
                   disabled={!!accessToken}
                 >
