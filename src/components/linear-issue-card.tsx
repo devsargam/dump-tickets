@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState, useRef, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -27,24 +27,6 @@ export function IssueCard({
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
   const [editDescription, setEditDescription] = useState(description || "");
-  
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Focus input when entering edit mode
-  useEffect(() => {
-    if (isEditingTitle && titleInputRef.current) {
-      titleInputRef.current.focus();
-      titleInputRef.current.select();
-    }
-  }, [isEditingTitle]);
-
-  useEffect(() => {
-    if (isEditingDescription && descriptionTextareaRef.current) {
-      descriptionTextareaRef.current.focus();
-      descriptionTextareaRef.current.select();
-    }
-  }, [isEditingDescription]);
 
   const handleTitleSave = () => {
     if (onEdit && editTitle.trim()) {
@@ -88,6 +70,14 @@ export function IssueCard({
     }
   };
 
+  const handleTitleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
+  };
+
+  const handleDescriptionFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    e.target.select();
+  };
+
   return (
     <article className="relative bg-muted/50 border border-muted rounded-md p-4 flex flex-col gap-2 hover:bg-muted transition-colors">
       <header className="flex items-center justify-between text-xs text-muted-foreground font-medium uppercase tracking-widest">
@@ -109,11 +99,12 @@ export function IssueCard({
       {isEditingTitle ? (
         <div className="flex items-center gap-2">
           <Input
-            ref={titleInputRef}
+            autoFocus
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             onKeyDown={handleTitleKeyDown}
-            className="text-sm font-semibold flex-1"
+            onFocus={handleTitleFocus}
+            className="text-sm font-semibold flex-1 focus:ring-0"
             placeholder="Issue title..."
           />
           <Button
@@ -148,11 +139,12 @@ export function IssueCard({
       {isEditingDescription ? (
         <div className="flex flex-col gap-2">
           <Textarea
-            ref={descriptionTextareaRef}
+            autoFocus
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
             onKeyDown={handleDescriptionKeyDown}
-            className="text-sm resize-none min-h-[80px]"
+            onFocus={handleDescriptionFocus}
+            className="text-sm resize-none min-h-[80px] focus:ring-0"
             placeholder="Issue description..."
           />
           <div className="flex items-center gap-2 justify-end">
