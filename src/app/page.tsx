@@ -11,11 +11,46 @@ import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 import { LINEAR } from "@/utils/constants";
 import { Toaster } from "@/components/ui/sonner";
+import { Loader2 } from "lucide-react";
+
+// Step labels for the multi-step flow
+const STEPS = ["Auth", "Prepare", "Import"] as const;
+
+interface ProgressBarProps {
+  step: number;
+}
+
+// Visual progress bar shown at the top of the page
+function ProgressBar({ step }: ProgressBarProps) {
+  return (
+    <div className="w-full flex items-center justify-between mb-8 max-w-sm">
+      {STEPS.map((label, idx) => (
+        <div key={label} className="flex flex-col items-center flex-1">
+          <div
+            className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-colors ${
+              idx <= step
+                ? "bg-primary text-primary-foreground"
+                : "border border-muted-foreground text-muted-foreground"
+            }`}
+          >
+            {idx + 1}
+          </div>
+          <span className="mt-2 text-xs sm:text-sm text-center whitespace-nowrap">
+            {label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [issues, setIssues] = useState<Issue | null>(null);
+  const [currentStep, setCurrentStep] = useState<number>(0);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [isCreatingTicketsWithAI, setIsCreatingTicketsWithAI] = useState(false);
+  const [isCreatingLinearTickets, setIsCreatingLinearTickets] = useState(false);
 
   const createIssue = async (issues: Issue) => {
     if (!accessToken) {
@@ -122,6 +157,7 @@ export default function Home() {
         await mutationPromise;
       }
 
+      setIsCreatingLinearTickets(false);
       toast.success(
         `All ${totalIssues} issues have been imported to Linear 🚀`
       );
@@ -159,14 +195,17 @@ export default function Home() {
 
       setAccessToken(access_token);
       clearURLParams();
+      // Move to the next step after successful authentication
+      setCurrentStep(1);
     })();
   }, []);
 
+  // Automatically move to the "Import" step once issues are available
   useEffect(() => {
-    if (accessToken) {
-      console.log(accessToken);
+    if (issues?.issues?.length) {
+      setCurrentStep(2);
     }
-  }, [accessToken]);
+  }, [issues]);
 
   // Function to remove an issue by index
   function removeIssue(index: number) {
@@ -180,28 +219,37 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col gap-4 items-center h-screen max-w-screen-md mx-auto py-10">
-      <Button
-        variant="outline"
-        onClick={openLinearAuth}
-        disabled={!!accessToken}
-      >
-        Open Linear Auth
-      </Button>
-      {accessToken && (
-        <>
+    <main className="flex flex-col items-center h-screen max-w-screen-md mx-auto py-10 px-4">
+      {/* Progress indicator */}
+      <ProgressBar step={currentStep} />
+
+      {/* Step 1 – Authentication */}
+      {currentStep === 0 && (
+        <Button
+          variant="outline"
+          onClick={openLinearAuth}
+          disabled={!!accessToken}
+        >
+          Open Linear Auth
+        </Button>
+      )}
+
+      {/* Step 2 – Prepare issues */}
+      {currentStep === 1 && (
+        <div className="flex flex-col gap-4 w-full">
           <Textarea
             ref={textAreaRef}
-            className="w-full h-full resize-none focus-visible:ring-0"
-            rows={20}
+            className="w-full h-full min-h-[500px] resize-none focus-visible:ring-0"
+            rows={18}
             autoFocus
           />
           <Button
-            variant="outline"
+            variant="default"
             onClick={async () => {
               const text = textAreaRef.current?.value;
               if (!text) return toast.error("No text to process");
 
+              setIsCreatingTicketsWithAI(true);
               const response = await fetch("/api/chat", {
                 method: "POST",
                 body: JSON.stringify({ text }),
@@ -210,49 +258,58 @@ export default function Home() {
               const data = issuesSchema.safeParse(await response.json());
               if (!data.success) return toast.error("Failed to parse response");
 
+              setIsCreatingTicketsWithAI(false);
               setIssues(data.data);
             }}
           >
-            AI Actions
+            Create Issues
+            {isCreatingTicketsWithAI && (
+              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+            )}
           </Button>
-
-          {/* Render issues as cards when available */}
-          {issues?.issues?.length ? (
-            <section className="w-full flex flex-col gap-4 mt-8">
-              <header className="flex items-center justify-between gap-2 text-sm font-semibold">
-                <div className="flex items-center gap-2">
-                  <h2>Todo</h2>
-                  <span className="text-muted-foreground">
-                    {issues.issues.length}
-                  </span>
-                </div>
-                <Button
-                  variant="default"
-                  onClick={async () => {
-                    console.log("hello world");
-
-                    createIssue(issues);
-                  }}
-                >
-                  Import to Linear
-                </Button>
-              </header>
-
-              <div className="flex flex-col gap-3">
-                {issues.issues.map(({ title, description }, idx) => (
-                  <IssueCard
-                    key={idx}
-                    index={idx + 1}
-                    title={title}
-                    description={description}
-                    onDelete={() => removeIssue(idx)}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
-        </>
+        </div>
       )}
+
+      {/* Step 3 – Import to Linear */}
+      {currentStep === 2 && issues?.issues?.length ? (
+        <section className="w-full flex flex-col gap-4">
+          <header className="flex items-center justify-between gap-2 text-sm font-semibold">
+            <div className="flex items-center gap-2">
+              <h2>Todo</h2>
+              <span className="text-muted-foreground">
+                {issues.issues.length}
+              </span>
+            </div>
+            <Button
+              variant="default"
+              onClick={async () => {
+                setIsCreatingLinearTickets(true);
+                createIssue(issues);
+              }}
+            >
+              Import to Linear
+              {isCreatingLinearTickets && (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              )}
+            </Button>
+          </header>
+
+          <div className="flex flex-col gap-3">
+            {issues.issues.map(({ title, description }, idx) => (
+              <IssueCard
+                key={idx}
+                index={idx + 1}
+                title={title}
+                description={description}
+                onDelete={() => removeIssue(idx)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Toasts */}
+      <Toaster />
     </main>
   );
 }
