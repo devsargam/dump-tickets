@@ -236,6 +236,18 @@ export default function Home() {
     });
   }
 
+  function editIssue(index: number, title: string, description: string) {
+    setIssues((prev) => {
+      if (!prev) return prev;
+      const updatedIssues = [...prev.issues];
+      updatedIssues[index] = { title, description };
+      return {
+        ...prev,
+        issues: updatedIssues,
+      };
+    });
+  }
+
   return (
     <>
       <BackgroundPattern />
@@ -420,6 +432,7 @@ For example:
                         title={title}
                         description={description}
                         onDelete={() => removeIssue(idx)}
+                        onEdit={(newTitle, newDescription) => editIssue(idx, newTitle, newDescription)}
                       />
                     </motion.div>
                   ))}
