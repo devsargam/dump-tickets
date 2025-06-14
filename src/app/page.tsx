@@ -3,6 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { IssueCard } from "@/components/linear-issue-card";
+import { BackgroundPattern } from "@/components/background-pattern";
+import {
+  ConnectIcon,
+  DocumentIcon,
+  UploadIcon,
+  SparkleIcon,
+  CheckIcon,
+} from "@/components/icons";
 import { clearURLParams } from "@/utils";
 import { exchangeLinearToken, getLinearAuthURL } from "@/utils/linear";
 import { type Issue, issuesSchema } from "@/utils/zod";
@@ -12,34 +20,62 @@ import { v4 as uuid } from "uuid";
 import { LINEAR } from "@/utils/constants";
 import { Toaster } from "@/components/ui/sonner";
 import { Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Step labels for the multi-step flow
-const STEPS = ["Auth", "Prepare", "Import"] as const;
+const STEPS = ["Connect", "Prepare", "Import"] as const;
 
 interface ProgressBarProps {
   step: number;
 }
 
-// Visual progress bar shown at the top of the page
 function ProgressBar({ step }: ProgressBarProps) {
+  const icons = [ConnectIcon, DocumentIcon, UploadIcon];
+
   return (
-    <div className="w-full flex items-center justify-between mb-8 max-w-sm">
-      {STEPS.map((label, idx) => (
-        <div key={label} className="flex flex-col items-center flex-1">
-          <div
-            className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-colors ${
-              idx <= step
-                ? "bg-primary text-primary-foreground"
-                : "border border-muted-foreground text-muted-foreground"
-            }`}
+    <div className="w-full flex items-center justify-between mb-20 max-w-lg mx-auto">
+      {STEPS.map((label, idx) => {
+        const Icon = icons[idx];
+        const isCompleted = idx < step;
+        const isCurrent = idx === step;
+
+        return (
+          <motion.div
+            key={label}
+            className="flex flex-col items-center flex-1 relative"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: idx * 0.2 }}
           >
-            {idx + 1}
-          </div>
-          <span className="mt-2 text-xs sm:text-sm text-center whitespace-nowrap">
-            {label}
-          </span>
-        </div>
-      ))}
+            <motion.div
+              className={`flex items-center justify-center w-12 h-12 rounded-xl border transition-all duration-300 ${
+                isCompleted
+                  ? "bg-zinc-900 border-zinc-900 text-white"
+                  : isCurrent
+                  ? "bg-white border-zinc-300 text-zinc-900 shadow-sm"
+                  : "bg-zinc-50 border-zinc-200 text-zinc-400"
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isCompleted ? (
+                <CheckIcon className="w-5 h-5" />
+              ) : (
+                <Icon className="w-5 h-5" />
+              )}
+            </motion.div>
+            <span
+              className={`mt-3 text-sm font-medium transition-colors ${
+                isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-500"
+              }`}
+            >
+              {label}
+            </span>
+            {idx < STEPS.length - 1 && (
+              <div className="absolute top-6 left-[60%] w-[80%] h-px bg-zinc-200" />
+            )}
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
@@ -61,7 +97,6 @@ export default function Home() {
     }
 
     try {
-      // Step 1: Fetch the first available team for the authenticated user.
       const viewerQuery = `
         query ViewerTeams {
           viewer {
@@ -94,7 +129,6 @@ export default function Home() {
         return;
       }
 
-      // Helper GraphQL mutation string (re-used for each issue)
       const issueCreateMutation = `
         mutation CreateIssue($input: IssueCreateInput!) {
           issueCreate(input: $input) {
@@ -109,10 +143,8 @@ export default function Home() {
       `;
 
       const totalIssues = issues.issues.length;
-      let completedIssues = 0;
 
       for (const { title, description } of issues.issues) {
-        // Create a promise that performs the mutation
         const mutationPromise = (async () => {
           const variables = {
             input: {
@@ -140,27 +172,19 @@ export default function Home() {
           return createData.data.issueCreate.issue;
         })();
 
-        // Fire and forget the toast; it doesn't return the mutation promise
         toast.promise(mutationPromise, {
-          // loading: `Creating "${title}" (${
-          //   completedIssues + 1
-          // }/${totalIssues})...`,
           loading: "Creating issue...",
           success: (issue: { identifier: string }) => {
-            completedIssues += 1;
             return `Created ${issue.identifier}: ${title}`;
           },
           error: (err: Error) => err.message,
         });
 
-        // Wait for the mutation itself before continuing
         await mutationPromise;
       }
 
       setIsCreatingLinearTickets(false);
-      toast.success(
-        `All ${totalIssues} issues have been imported to Linear 🚀`
-      );
+      toast.success(`All ${totalIssues} issues have been imported to Linear`);
     } catch (error) {
       console.error(error);
       toast.error("An unexpected error occurred while creating issues.");
@@ -168,15 +192,12 @@ export default function Home() {
   };
 
   const openLinearAuth = () => {
-    // Generate random code to validate against CSRF attack
     const verificationCode = `linear-${uuid()}`;
     localStorage.setItem("linear-verification", verificationCode);
-
     const authURL = getLinearAuthURL(verificationCode);
     window.location.replace(authURL);
   };
 
-  // Handle Linear auth response
   useEffect(() => {
     (async () => {
       const authResponse = new URLSearchParams(window.location.search);
@@ -195,19 +216,16 @@ export default function Home() {
 
       setAccessToken(access_token);
       clearURLParams();
-      // Move to the next step after successful authentication
       setCurrentStep(1);
     })();
   }, []);
 
-  // Automatically move to the "Import" step once issues are available
   useEffect(() => {
     if (issues?.issues?.length) {
       setCurrentStep(2);
     }
   }, [issues]);
 
-  // Function to remove an issue by index
   function removeIssue(index: number) {
     setIssues((prev) => {
       if (!prev) return prev;
@@ -219,116 +237,200 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center h-screen max-w-screen-md mx-auto py-10 px-4">
-      {/* Progress indicator */}
-      <ProgressBar step={currentStep} />
+    <>
+      <BackgroundPattern />
+      <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <div className="w-full max-w-3xl mx-auto">
+          <ProgressBar step={currentStep} />
 
-      {/* Hero header */}
+          <AnimatePresence mode="wait">
+            {currentStep === 0 && (
+              <motion.section
+                key="auth"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="text-center space-y-8"
+              >
+                <div className="space-y-4">
+                  <h1 className="text-4xl font-light text-zinc-900 tracking-tight">
+                    Import issues to Linear
+                  </h1>
+                  <p className="text-lg text-zinc-600 font-normal max-w-md mx-auto leading-relaxed">
+                    Connect your account, paste your tasks, and let AI organize
+                    them into structured Linear issues.
+                  </p>
+                </div>
 
-      {/* Step 1 – Authentication */}
-      {currentStep === 0 && (
-        <section className="flex flex-col items-center gap-6">
-          <header className="text-center mb-10 max-w-2xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Import issues to Linear in seconds
-            </h1>
-            <p className="mt-3 text-muted-foreground">
-              Connect your account, paste a list of tasks, and let our AI turn
-              them into ready-to-track Linear issues.
-            </p>
-          </header>
-          <Button
-            size="lg"
-            className="px-8"
-            variant="default"
-            onClick={openLinearAuth}
-            disabled={!!accessToken}
-          >
-            Connect Linear Account
-          </Button>
-          <p className="text-sm text-muted-foreground max-w-sm text-center">
-            We'll redirect you to Linear to securely authorise access. You can
-            revoke permissions at any time.
-          </p>
-        </section>
-      )}
+                <Button
+                  size="lg"
+                  className="px-8 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
+                  onClick={openLinearAuth}
+                  disabled={!!accessToken}
+                >
+                  <ConnectIcon className="w-4 h-4 mr-2" />
+                  Connect Linear Account
+                </Button>
 
-      {/* Step 2 – Prepare issues */}
-      {currentStep === 1 && (
-        <div className="flex flex-col gap-4 w-full">
-          <Textarea
-            ref={textAreaRef}
-            className="w-full h-full min-h-[500px] resize-none focus-visible:ring-0"
-            rows={18}
-            autoFocus
-          />
-          <Button
-            variant="default"
-            onClick={async () => {
-              const text = textAreaRef.current?.value;
-              if (!text) return toast.error("No text to process");
-
-              setIsCreatingTicketsWithAI(true);
-              const response = await fetch("/api/chat", {
-                method: "POST",
-                body: JSON.stringify({ text }),
-              });
-
-              const data = issuesSchema.safeParse(await response.json());
-              if (!data.success) return toast.error("Failed to parse response");
-
-              setIsCreatingTicketsWithAI(false);
-              setIssues(data.data);
-            }}
-          >
-            Create Issues
-            {isCreatingTicketsWithAI && (
-              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                <p className="text-sm text-zinc-500 max-w-sm mx-auto">
+                  We'll redirect you to Linear for secure authentication. You
+                  can revoke access anytime.
+                </p>
+              </motion.section>
             )}
-          </Button>
+
+            {currentStep === 1 && (
+              <motion.section
+                key="prepare"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="w-full max-w-2xl mx-auto space-y-6"
+              >
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-light text-zinc-900">
+                    Paste your tasks
+                  </h2>
+                  <p className="text-zinc-600 max-w-lg mx-auto">
+                    Add your requirements, todos, or any text. AI will structure
+                    them into Linear issues.
+                  </p>
+                </div>
+
+                <div className="w-full">
+                  <Textarea
+                    ref={textAreaRef}
+                    className="w-full min-h-[300px] text-base leading-relaxed resize-none"
+                    autoFocus
+                    placeholder="Paste your tasks here...
+
+For example:
+• Fix the login bug on mobile
+• Add search functionality to dashboard  
+• Update user profile settings
+• Write API documentation"
+                  />
+                </div>
+
+                <div className="w-full">
+                  <Button
+                    size="lg"
+                    className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
+                    onClick={async () => {
+                      const text = textAreaRef.current?.value;
+                      if (!text) return toast.error("No text to process");
+
+                      setIsCreatingTicketsWithAI(true);
+                      const response = await fetch("/api/chat", {
+                        method: "POST",
+                        body: JSON.stringify({ text }),
+                      });
+
+                      const data = issuesSchema.safeParse(
+                        await response.json()
+                      );
+                      if (!data.success)
+                        return toast.error("Failed to parse response");
+
+                      setIsCreatingTicketsWithAI(false);
+                      setIssues(data.data);
+                    }}
+                    disabled={isCreatingTicketsWithAI}
+                  >
+                    {isCreatingTicketsWithAI ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating issues...
+                      </>
+                    ) : (
+                      <>
+                        <SparkleIcon className="w-4 h-4 mr-2" />
+                        Create Issues
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </motion.section>
+            )}
+
+            {currentStep === 2 && issues?.issues?.length ? (
+              <motion.section
+                key="import"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between p-6 bg-white border border-zinc-200 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-green-600 rounded-full" />
+                    <h2 className="text-lg font-medium text-zinc-900">
+                      Ready to import
+                    </h2>
+                    <span className="px-2.5 py-1 text-xs font-medium bg-zinc-100 text-zinc-700 rounded-full">
+                      {issues.issues.length} issues
+                    </span>
+                  </div>
+                  <Button
+                    className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
+                    onClick={async () => {
+                      setIsCreatingLinearTickets(true);
+                      createIssue(issues);
+                    }}
+                    disabled={isCreatingLinearTickets}
+                  >
+                    {isCreatingLinearTickets ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <UploadIcon className="w-4 h-4 mr-2" />
+                        Import to Linear
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <motion.div
+                  className="space-y-3"
+                  initial="hidden"
+                  animate="show"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    show: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.1,
+                      },
+                    },
+                  }}
+                >
+                  {issues.issues.map(({ title, description }, idx) => (
+                    <motion.div
+                      key={idx}
+                      variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        show: { opacity: 1, y: 0 },
+                      }}
+                    >
+                      <IssueCard
+                        index={idx + 1}
+                        title={title}
+                        description={description}
+                        onDelete={() => removeIssue(idx)}
+                      />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </motion.section>
+            ) : null}
+          </AnimatePresence>
         </div>
-      )}
 
-      {/* Step 3 – Import to Linear */}
-      {currentStep === 2 && issues?.issues?.length ? (
-        <section className="w-full flex flex-col gap-4">
-          <header className="flex items-center justify-between gap-2 text-sm font-semibold">
-            <div className="flex items-center gap-2">
-              <h2>Todo</h2>
-              <span className="text-muted-foreground">
-                {issues.issues.length}
-              </span>
-            </div>
-            <Button
-              variant="default"
-              onClick={async () => {
-                setIsCreatingLinearTickets(true);
-                createIssue(issues);
-              }}
-            >
-              Import to Linear
-              {isCreatingLinearTickets && (
-                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-              )}
-            </Button>
-          </header>
-
-          <div className="flex flex-col gap-3">
-            {issues.issues.map(({ title, description }, idx) => (
-              <IssueCard
-                key={idx}
-                index={idx + 1}
-                title={title}
-                description={description}
-                onDelete={() => removeIssue(idx)}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* Toasts */}
-      <Toaster />
-    </main>
+        <Toaster />
+      </main>
+    </>
   );
 }
