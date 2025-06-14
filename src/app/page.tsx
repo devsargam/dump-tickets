@@ -223,15 +223,34 @@ export default function Home() {
       {/* Progress indicator */}
       <ProgressBar step={currentStep} />
 
+      {/* Hero header */}
+
       {/* Step 1 – Authentication */}
       {currentStep === 0 && (
-        <Button
-          variant="outline"
-          onClick={openLinearAuth}
-          disabled={!!accessToken}
-        >
-          Open Linear Auth
-        </Button>
+        <section className="flex flex-col items-center gap-6">
+          <header className="text-center mb-10 max-w-2xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              Import issues to Linear in seconds
+            </h1>
+            <p className="mt-3 text-muted-foreground">
+              Connect your account, paste a list of tasks, and let our AI turn
+              them into ready-to-track Linear issues.
+            </p>
+          </header>
+          <Button
+            size="lg"
+            className="px-8"
+            variant="default"
+            onClick={openLinearAuth}
+            disabled={!!accessToken}
+          >
+            Connect Linear Account
+          </Button>
+          <p className="text-sm text-muted-foreground max-w-sm text-center">
+            We'll redirect you to Linear to securely authorise access. You can
+            revoke permissions at any time.
+          </p>
+        </section>
       )}
 
       {/* Step 2 – Prepare issues */}
