@@ -2,9 +2,10 @@
 
 import { ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Trash2, Check, X } from "lucide-react";
+import { Check, Trash2, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 
 interface IssueCardProps {
   index: number;
@@ -79,18 +80,26 @@ export function IssueCard({
   };
 
   return (
-    <article className="relative bg-muted/50 border border-muted rounded-md p-4 flex flex-col gap-2 hover:bg-muted transition-colors">
-      <header className="flex items-center justify-between text-xs text-muted-foreground font-medium uppercase tracking-widest">
-        <span>STA-{index}</span>
+    <motion.article
+      className="bg-white border border-zinc-200 rounded-lg p-5 hover:border-zinc-300 transition-colors group"
+      whileHover={{
+        y: -1,
+        transition: { type: "spring", stiffness: 400, damping: 25 },
+      }}
+    >
+      <header className="flex items-center justify-between mb-3">
+        <span className="px-2 py-1 text-xs font-mono text-zinc-500 bg-zinc-50 rounded border">
+          STA-{index}
+        </span>
         {onDelete && (
           <Button
             size="icon"
             variant="ghost"
-            className="text-muted-foreground hover:text-destructive"
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 text-zinc-400 hover:text-red-600 hover:bg-red-50"
             onClick={onDelete}
             aria-label="Delete issue"
           >
-            <Trash2 className="size-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
         )}
       </header>
@@ -174,7 +183,7 @@ export function IssueCard({
       ) : (
         description && (
           <p 
-            className="text-sm text-muted-foreground line-clamp-3 cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+            className="text-sm text-zinc-600 leading-relaxed line-clamp-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
             onClick={() => setIsEditingDescription(true)}
             title="Click to edit description"
           >
@@ -193,7 +202,9 @@ export function IssueCard({
         </button>
       )}
 
-      {footer && <footer className="mt-auto pt-2">{footer}</footer>}
-    </article>
+      {footer && (
+        <footer className="mt-4 pt-3 border-t border-zinc-100">{footer}</footer>
+      )}
+    </motion.article>
   );
 }
