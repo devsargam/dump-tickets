@@ -104,7 +104,7 @@ export function IssueCard({
             onChange={(e) => setEditTitle(e.target.value)}
             onKeyDown={handleTitleKeyDown}
             onFocus={handleTitleFocus}
-            className="text-sm font-semibold flex-1 focus:ring-0"
+            className="text-sm font-semibold flex-1 focus:ring-0 focus-visible:ring-0 focus:outline-none focus-visible:outline-none"
             placeholder="Issue title..."
           />
           <Button
@@ -144,7 +144,7 @@ export function IssueCard({
             onChange={(e) => setEditDescription(e.target.value)}
             onKeyDown={handleDescriptionKeyDown}
             onFocus={handleDescriptionFocus}
-            className="text-sm resize-none min-h-[80px] focus:ring-0"
+            className="text-sm resize-none min-h-[80px] focus:ring-0 focus-visible:ring-0 focus:outline-none focus-visible:outline-none"
             placeholder="Issue description..."
           />
           <div className="flex items-center gap-2 justify-end">
