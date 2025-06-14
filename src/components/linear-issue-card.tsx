@@ -2,7 +2,8 @@
 
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Trash, Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface IssueCardProps {
   index: number;
@@ -20,33 +21,41 @@ export function IssueCard({
   onDelete,
 }: IssueCardProps) {
   return (
-    <article className="relative bg-muted/50 border border-muted rounded-md p-4 flex flex-col gap-2 hover:bg-muted transition-colors">
-      <header className="flex items-center justify-between text-xs text-muted-foreground font-medium uppercase tracking-widest">
-        <span>STA-{index}</span>
+    <motion.article
+      className="bg-white border border-zinc-200 rounded-lg p-5 hover:border-zinc-300 transition-colors group"
+      whileHover={{
+        y: -1,
+        transition: { type: "spring", stiffness: 400, damping: 25 },
+      }}
+    >
+      <header className="flex items-center justify-between mb-3">
+        <span className="px-2 py-1 text-xs font-mono text-zinc-500 bg-zinc-50 rounded border">
+          STA-{index}
+        </span>
         {onDelete && (
           <Button
             size="icon"
             variant="ghost"
-            className="text-muted-foreground hover:text-destructive"
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 text-zinc-400 hover:text-red-600 hover:bg-red-50"
             onClick={onDelete}
             aria-label="Delete issue"
           >
-            <Trash2 className="size-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </Button>
         )}
       </header>
 
-      <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1">
-        {title}
-      </h3>
+      <h3 className="font-medium text-zinc-900 mb-2 leading-snug">{title}</h3>
 
       {description && (
-        <p className="text-sm text-muted-foreground line-clamp-3">
+        <p className="text-sm text-zinc-600 leading-relaxed line-clamp-2">
           {description}
         </p>
       )}
 
-      {footer && <footer className="mt-auto pt-2">{footer}</footer>}
-    </article>
+      {footer && (
+        <footer className="mt-4 pt-3 border-t border-zinc-100">{footer}</footer>
+      )}
+    </motion.article>
   );
 }
