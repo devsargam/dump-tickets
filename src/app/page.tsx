@@ -87,6 +87,7 @@ export default function Home() {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [isCreatingTicketsWithAI, setIsCreatingTicketsWithAI] = useState(false);
   const [isCreatingLinearTickets, setIsCreatingLinearTickets] = useState(false);
+  const [isImportComplete, setIsImportComplete] = useState(false);
 
   const createIssue = async (issues: Issue) => {
     if (!accessToken) {
@@ -185,6 +186,7 @@ export default function Home() {
 
       setIsCreatingLinearTickets(false);
       toast.success(`All ${totalIssues} issues have been imported to Linear`);
+      setIsImportComplete(true);
     } catch (error) {
       console.error(error);
       toast.error("An unexpected error occurred while creating issues.");
@@ -365,7 +367,9 @@ For example:
               </motion.section>
             )}
 
-            {currentStep === 2 && issues?.issues?.length ? (
+            {currentStep === 2 &&
+            issues?.issues?.length &&
+            !isImportComplete ? (
               <motion.section
                 key="import"
                 initial={{ opacity: 0, y: 20 }}
@@ -432,13 +436,65 @@ For example:
                         title={title}
                         description={description}
                         onDelete={() => removeIssue(idx)}
-                        onEdit={(newTitle, newDescription) => editIssue(idx, newTitle, newDescription)}
+                        onEdit={(newTitle, newDescription) =>
+                          editIssue(idx, newTitle, newDescription)
+                        }
                       />
                     </motion.div>
                   ))}
                 </motion.div>
               </motion.section>
             ) : null}
+
+            {isImportComplete && (
+              <motion.section
+                key="done"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="text-center space-y-8"
+              >
+                <motion.div
+                  className="flex items-center justify-center w-20 h-20 mx-auto rounded-full bg-green-600 text-white"
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <CheckIcon className="w-8 h-8" />
+                </motion.div>
+
+                <motion.h2
+                  className="text-3xl font-light text-zinc-900"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  All set!
+                </motion.h2>
+
+                <motion.p
+                  className="text-zinc-600 max-w-md mx-auto"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  Your issues are now in Linear. Happy shipping! 🚀
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <Button
+                    size="lg"
+                    className="px-8 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
+                    onClick={() => window.open("https://linear.app/", "_blank")}
+                  >
+                    View in Linear
+                  </Button>
+                </motion.div>
+              </motion.section>
+            )}
           </AnimatePresence>
         </div>
 
