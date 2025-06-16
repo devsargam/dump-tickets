@@ -21,6 +21,7 @@ import { LINEAR } from "@/utils/constants";
 import { Toaster } from "@/components/ui/sonner";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Text } from "@/components/ui/text";
 
 const STEPS = ["Connect", "Prepare", "Import"] as const;
 
@@ -63,13 +64,15 @@ function ProgressBar({ step }: ProgressBarProps) {
                 <Icon className="w-5 h-5" />
               )}
             </motion.div>
-            <span
-              className={`mt-3 text-sm font-medium transition-colors ${
+            <Text
+              as="span"
+              variant="sm"
+              className={`mt-3 font-medium transition-colors ${
                 isCompleted || isCurrent ? "text-zinc-900" : "text-zinc-500"
               }`}
             >
               {label}
-            </span>
+            </Text>
             {idx < STEPS.length - 1 && (
               <div className="absolute top-6 left-[60%] w-[80%] h-px bg-zinc-200" />
             )}
@@ -267,13 +270,21 @@ export default function Home() {
                 className="text-center space-y-8"
               >
                 <div className="space-y-4">
-                  <h1 className="text-4xl font-light text-zinc-900 tracking-tight">
+                  <Text
+                    as="h1"
+                    variant="5xl"
+                    className="font-light tracking-tight"
+                  >
                     Import issues to Linear
-                  </h1>
-                  <p className="text-lg text-zinc-600 font-normal max-w-md mx-auto leading-relaxed">
+                  </Text>
+                  <Text
+                    as="p"
+                    variant="lg"
+                    className="text-zinc-600 font-normal max-w-md mx-auto leading-relaxed"
+                  >
                     Connect your account, paste your tasks, and let AI organize
                     them into structured Linear issues.
-                  </p>
+                  </Text>
                 </div>
 
                 <Button
@@ -286,10 +297,14 @@ export default function Home() {
                   Connect Linear Account
                 </Button>
 
-                <p className="text-sm text-zinc-500 max-w-sm mx-auto">
+                <Text
+                  as="p"
+                  variant="sm"
+                  className="text-zinc-500 max-w-sm mx-auto"
+                >
                   We'll redirect you to Linear for secure authentication. You
                   can revoke access anytime.
-                </p>
+                </Text>
               </motion.section>
             )}
 
@@ -302,13 +317,21 @@ export default function Home() {
                 className="w-full max-w-2xl mx-auto space-y-6"
               >
                 <div className="text-center space-y-2">
-                  <h2 className="text-2xl font-light text-zinc-900">
+                  <Text
+                    as="h2"
+                    variant="3xl"
+                    className="font-light text-zinc-900"
+                  >
                     Paste your tasks
-                  </h2>
-                  <p className="text-zinc-600 max-w-lg mx-auto">
+                  </Text>
+                  <Text
+                    as="p"
+                    variant="base"
+                    className="text-zinc-600 max-w-lg mx-auto font-normal"
+                  >
                     Add your requirements, todos, or any text. AI will structure
                     them into Linear issues.
-                  </p>
+                  </Text>
                 </div>
 
                 <div className="w-full">
@@ -380,12 +403,20 @@ For example:
                 <div className="flex items-center justify-between p-6 bg-white border border-zinc-200 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-green-600 rounded-full" />
-                    <h2 className="text-lg font-medium text-zinc-900">
+                    <Text
+                      as="h2"
+                      variant="lg"
+                      className="font-medium text-zinc-900"
+                    >
                       Ready to import
-                    </h2>
-                    <span className="px-2.5 py-1 text-xs font-medium bg-zinc-100 text-zinc-700 rounded-full">
+                    </Text>
+                    <Text
+                      as="span"
+                      variant="xs"
+                      className="px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-full"
+                    >
                       {issues.issues.length} issues
-                    </span>
+                    </Text>
                   </div>
                   <Button
                     className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
@@ -436,7 +467,9 @@ For example:
                         title={title}
                         description={description}
                         onDelete={() => removeIssue(idx)}
-                        onEdit={(newTitle, newDescription) => editIssue(idx, newTitle, newDescription)}
+                        onEdit={(newTitle, newDescription) =>
+                          editIssue(idx, newTitle, newDescription)
+                        }
                       />
                     </motion.div>
                   ))}
@@ -460,23 +493,33 @@ For example:
                   <CheckIcon className="w-8 h-8" />
                 </motion.div>
 
-                <motion.h2
-                  className="text-3xl font-light text-zinc-900"
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
-                  All set!
-                </motion.h2>
+                  <Text
+                    as="h2"
+                    variant="4xl"
+                    className="font-light text-zinc-900"
+                  >
+                    All set!
+                  </Text>
+                </motion.div>
 
-                <motion.p
-                  className="text-zinc-600 max-w-md mx-auto"
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
-                  Your issues are now in Linear. Happy shipping! 🚀
-                </motion.p>
+                  <Text
+                    as="p"
+                    variant="base"
+                    className="text-zinc-600 max-w-md mx-auto"
+                  >
+                    Your issues are now in Linear. Happy shipping! 🚀
+                  </Text>
+                </motion.div>
 
                 <motion.div
                   initial={{ opacity: 0 }}
