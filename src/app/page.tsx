@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { IssueCard } from "@/components/linear-issue-card";
-import { SpeechToText } from "@/components/speech-to-text";
 import { BackgroundPattern } from "@/components/background-pattern";
 import {
   ConnectIcon,
@@ -19,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 import { LINEAR } from "@/utils/constants";
+import { Toaster } from "@/components/ui/sonner";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -88,21 +88,6 @@ export default function Home() {
   const [isCreatingTicketsWithAI, setIsCreatingTicketsWithAI] = useState(false);
   const [isCreatingLinearTickets, setIsCreatingLinearTickets] = useState(false);
   const [isImportComplete, setIsImportComplete] = useState(false);
-
-  const handleTranscription = (text: string) => {
-    if (textAreaRef.current) {
-      const currentValue = textAreaRef.current.value;
-      // Append to textarea if there's existing content
-      if (currentValue.trim()) {
-        textAreaRef.current.value = currentValue + "\n\n" + text;
-      } else {
-        textAreaRef.current.value = text;
-      }
-      // Trigger change event to update any controlled components
-      const event = new Event("input", { bubbles: true });
-      textAreaRef.current.dispatchEvent(event);
-    }
-  };
 
   const createIssue = async (issues: Issue) => {
     if (!accessToken) {
@@ -285,7 +270,7 @@ export default function Home() {
                   <h1 className="text-4xl font-light text-zinc-900 tracking-tight">
                     Import issues to Linear
                   </h1>
-                  <p className="text-lg text-zinc-600 font-normal max-w-md mx-auto leading-relaxed text-balance">
+                  <p className="text-lg text-zinc-600 font-normal max-w-md mx-auto leading-relaxed">
                     Connect your account, paste your tasks, and let AI organize
                     them into structured Linear issues.
                   </p>
@@ -293,7 +278,7 @@ export default function Home() {
 
                 <Button
                   size="lg"
-                  className="px-8 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors cursor-pointer"
+                  className="px-8 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
                   onClick={openLinearAuth}
                   disabled={!!accessToken}
                 >
@@ -301,9 +286,9 @@ export default function Home() {
                   Connect Linear Account
                 </Button>
 
-                <p className="text-sm text-zinc-500 max-w-sm mx-auto text-balance">
-                  We'll redirect you to Linear for secure authentication.
-                  You can revoke access anytime.
+                <p className="text-sm text-zinc-500 max-w-sm mx-auto">
+                  We'll redirect you to Linear for secure authentication. You
+                  can revoke access anytime.
                 </p>
               </motion.section>
             )}
@@ -320,13 +305,13 @@ export default function Home() {
                   <h2 className="text-2xl font-light text-zinc-900">
                     Paste your tasks
                   </h2>
-                  <p className="text-zinc-600 max-w-lg mx-auto text-balance">
+                  <p className="text-zinc-600 max-w-lg mx-auto">
                     Add your requirements, todos, or any text. AI will structure
                     them into Linear issues.
                   </p>
                 </div>
 
-                <div className="w-full space-y-6">
+                <div className="w-full">
                   <Textarea
                     ref={textAreaRef}
                     className="w-full min-h-[300px] text-base leading-relaxed resize-none"
@@ -339,49 +324,45 @@ For example:
 • Update user profile settings
 • Write API documentation"
                   />
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="lg"
-                      className="flex-1 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors cursor-pointer"
-                      onClick={async () => {
-                        const text = textAreaRef.current?.value;
-                        if (!text) return toast.error("No text to process");
+                <div className="w-full">
+                  <Button
+                    size="lg"
+                    className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
+                    onClick={async () => {
+                      const text = textAreaRef.current?.value;
+                      if (!text) return toast.error("No text to process");
 
-                        setIsCreatingTicketsWithAI(true);
-                        const response = await fetch("/api/chat", {
-                          method: "POST",
-                          body: JSON.stringify({ text }),
-                        });
+                      setIsCreatingTicketsWithAI(true);
+                      const response = await fetch("/api/chat", {
+                        method: "POST",
+                        body: JSON.stringify({ text }),
+                      });
 
-                        const data = issuesSchema.safeParse(
-                          await response.json()
-                        );
-                        if (!data.success)
-                          return toast.error("Failed to parse response");
+                      const data = issuesSchema.safeParse(
+                        await response.json()
+                      );
+                      if (!data.success)
+                        return toast.error("Failed to parse response");
 
-                        setIsCreatingTicketsWithAI(false);
-                        setIssues(data.data);
-                      }}
-                      disabled={isCreatingTicketsWithAI}
-                    >
-                      {isCreatingTicketsWithAI ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating issues...
-                        </>
-                      ) : (
-                        <>
-                          <SparkleIcon className="w-4 h-4 mr-2" />
-                          Create Issues
-                        </>
-                      )}
-                    </Button>
-
-                    <div className="flex flex-col items-center space-y-2">
-                      <SpeechToText onTranscription={handleTranscription} />
-                    </div>
-                  </div>
+                      setIsCreatingTicketsWithAI(false);
+                      setIssues(data.data);
+                    }}
+                    disabled={isCreatingTicketsWithAI}
+                  >
+                    {isCreatingTicketsWithAI ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating issues...
+                      </>
+                    ) : (
+                      <>
+                        <SparkleIcon className="w-4 h-4 mr-2" />
+                        Create Issues
+                      </>
+                    )}
+                  </Button>
                 </div>
               </motion.section>
             )}
@@ -455,9 +436,7 @@ For example:
                         title={title}
                         description={description}
                         onDelete={() => removeIssue(idx)}
-                        onEdit={(newTitle, newDescription) =>
-                          editIssue(idx, newTitle, newDescription)
-                        }
+                        onEdit={(newTitle, newDescription) => editIssue(idx, newTitle, newDescription)}
                       />
                     </motion.div>
                   ))}
@@ -516,6 +495,8 @@ For example:
             )}
           </AnimatePresence>
         </div>
+
+        <Toaster />
       </main>
     </>
   );
