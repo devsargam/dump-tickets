@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
-  title: "Linear Issue Importer",
+  title: "LinearSync",
   description:
     "Import your tasks to Linear in seconds with AI-powered organization",
 };
@@ -14,11 +15,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
-        {children}
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="font-sans antialiased">
+          {children}
+          <Toaster richColors closeButton />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
