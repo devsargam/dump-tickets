@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { Provider as BalanceProvider } from 'react-wrap-balancer';
 
 export const metadata: Metadata = {
   title: "Linear Issue Importer",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        {children}
+        <BalanceProvider>
+          {children}
+        </BalanceProvider>
         <Toaster />
       </body>
     </html>
