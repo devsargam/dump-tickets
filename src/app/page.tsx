@@ -11,17 +11,17 @@ import {
   SparkleIcon,
   CheckIcon,
 } from "@/components/icons";
-import { clearURLParams } from "@/utils";
+import { clearURLParams, isIssueUnchanged } from "@/utils";
 import { exchangeLinearToken, getLinearAuthURL } from "@/utils/linear";
 import { type Issue, issuesSchema } from "@/utils/zod";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
 import { LINEAR } from "@/utils/constants";
-import { Toaster } from "@/components/ui/sonner";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Text } from "@/components/ui/text";
+import { SpeechToText } from "@/components/speech-to-text";
 
 const STEPS = ["Connect", "Prepare", "Import"] as const;
 
@@ -91,6 +91,21 @@ export default function Home() {
   const [isCreatingTicketsWithAI, setIsCreatingTicketsWithAI] = useState(false);
   const [isCreatingLinearTickets, setIsCreatingLinearTickets] = useState(false);
   const [isImportComplete, setIsImportComplete] = useState(false);
+
+  const handleTranscription = (text: string) => {
+    if (textAreaRef.current) {
+      const currentValue = textAreaRef.current.value;
+
+      if (currentValue.trim()) {
+        textAreaRef.current.value = currentValue + "\n\n" + text;
+      } else {
+        textAreaRef.current.value = text;
+      }
+
+      const event = new Event("input", { bubbles: true });
+      textAreaRef.current.dispatchEvent(event);
+    }
+  };
 
   const createIssue = async (issues: Issue) => {
     if (!accessToken) {
@@ -232,6 +247,8 @@ export default function Home() {
   }, [issues]);
 
   function removeIssue(index: number) {
+    const issueTitle = issues?.issues[index]?.title || "Issue";
+
     setIssues((prev) => {
       if (!prev) return prev;
       return {
@@ -239,9 +256,18 @@ export default function Home() {
         issues: prev.issues.filter((_, idx) => idx !== index),
       };
     });
+
+    toast.success(`Deleted "${issueTitle}"`);
   }
 
   function editIssue(index: number, title: string, description: string) {
+    const currentIssue = issues?.issues[index];
+
+    // Check if anything actually changed
+    if (isIssueUnchanged(currentIssue, title, description)) {
+      return; // No changes, don't update or show toast
+    }
+
     setIssues((prev) => {
       if (!prev) return prev;
       const updatedIssues = [...prev.issues];
@@ -251,6 +277,8 @@ export default function Home() {
         issues: updatedIssues,
       };
     });
+
+    toast.success(`Updated "${title}"`);
   }
 
   return (
@@ -280,7 +308,7 @@ export default function Home() {
                   <Text
                     as="p"
                     variant="lg"
-                    className="text-zinc-600 font-normal max-w-md mx-auto leading-relaxed"
+                    className="text-zinc-600 font-normal max-w-md mx-auto leading-relaxed text-balance"
                   >
                     Connect your account, paste your tasks, and let AI organize
                     them into structured Linear issues.
@@ -300,7 +328,7 @@ export default function Home() {
                 <Text
                   as="p"
                   variant="sm"
-                  className="text-zinc-500 max-w-sm mx-auto"
+                  className="text-zinc-500 max-w-sm mx-auto text-balance"
                 >
                   We'll redirect you to Linear for secure authentication. You
                   can revoke access anytime.
@@ -327,7 +355,7 @@ export default function Home() {
                   <Text
                     as="p"
                     variant="base"
-                    className="text-zinc-600 max-w-lg mx-auto font-normal"
+                    className="text-zinc-600 max-w-lg mx-auto font-normal text-balance"
                   >
                     Add your requirements, todos, or any text. AI will structure
                     them into Linear issues.
@@ -349,10 +377,10 @@ For example:
                   />
                 </div>
 
-                <div className="w-full">
+                <div className="w-full flex items-center space-x-2">
                   <Button
                     size="lg"
-                    className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
+                    className="flex-1 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-medium rounded-lg transition-colors"
                     onClick={async () => {
                       const text = textAreaRef.current?.value;
                       if (!text) return toast.error("No text to process");
@@ -386,6 +414,8 @@ For example:
                       </>
                     )}
                   </Button>
+
+                  <SpeechToText onTranscription={handleTranscription} />
                 </div>
               </motion.section>
             )}
@@ -538,8 +568,6 @@ For example:
             )}
           </AnimatePresence>
         </div>
-
-        <Toaster />
       </main>
     </>
   );
